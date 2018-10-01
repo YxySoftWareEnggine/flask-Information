@@ -3,7 +3,7 @@ import flask_script
 import flask_migrate
 from Config import Config
 import Info
-
+from Info import models,constants
 
 app = Info.Create_app("development")
 Info.set_up("development")
