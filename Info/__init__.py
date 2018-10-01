@@ -10,13 +10,15 @@ import flask_script
 import flask_migrate
 from Config import Config,config
 import logging
+import logging.handlers as handle
+
 
 
 db = flask_sqlalchemy.SQLAlchemy()
 
 def set_up(config_name):
     logging.basicConfig(level=config[config_name].LOG_LEVEL)
-    file_log_handler = logging.handlers.RotatingFileHandler("logs/log", maxBytes=1024*1024*100, backupCount=10)
+    file_log_handler = handle.RotatingFileHandler("logs/log", maxBytes=1024*1024*100, backupCount=10)
     # 创建日志记录的格式 日志等级 输入日志信息的文件名 行数 日志信息
     formatter = logging.Formatter('%(levelname)s %(filename)s:%(lineno)d %(message)s')
     # 为刚创建的日志记录器设置日志记录格式
