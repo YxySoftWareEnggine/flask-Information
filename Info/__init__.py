@@ -11,11 +11,9 @@ import flask_migrate
 from Config import Config,config
 import logging
 import logging.handlers as handle
-from Info.modules.index import index_blu
-
-
 
 db = flask_sqlalchemy.SQLAlchemy()
+redis_store = None #type = redis.StrictRedis
 
 def set_up(config_name):
     logging.basicConfig(level=config[config_name].LOG_LEVEL)
@@ -36,11 +34,14 @@ def Create_app(config_name):
 
     db.init_app(InformationApp)
 
+    global redis_store
     redis_store = redis.StrictRedis(host=config[config_name].REDIS_HOST,port=config[config_name].REDIS_PORT)
 
     flask_wtf.CSRFProtect(InformationApp)
 
     flask_session.Session(app=InformationApp)
+
+    from Info.modules.index import index_blu
 
     InformationApp.register_blueprint(index_blu)
 
