@@ -6,9 +6,11 @@ import flask_wtf
 import flask_session
 import base64
 import os
+import flask_script
+import flask_migrate
 
 InformationApp  = flask.Flask(__name__)
-
+manager = flask_script.Manager(InformationApp)
 
 class Config(object):
     DEBUG = True
@@ -30,12 +32,14 @@ db= flask_sqlalchemy.SQLAlchemy(InformationApp)
 redis_store = redis.StrictRedis(Config.REDIS_HOST,Config.REDIS_PORT)
 flask_wtf.CSRFProtect(InformationApp)
 flask_session.Session(app=InformationApp)
+flask_migrate.Migrate(InformationApp,db)
+manager.add_command('db',flask_migrate.MigrateCommand)
 
 @InformationApp.route('/')
 def index():
-    flask.session['names'] = 'itheima'
+    flask.session['names'] = 'yangXY'
     return '111111'
 
 
 if __name__ == '__main__':
-    InformationApp.run()
+    manager.run()
