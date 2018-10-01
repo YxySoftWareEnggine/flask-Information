@@ -11,6 +11,7 @@ import flask_migrate
 from Config import Config,config
 import logging
 import logging.handlers as handle
+from Info.modules.index import index_blu
 
 
 
@@ -40,6 +41,8 @@ def Create_app(config_name):
     flask_wtf.CSRFProtect(InformationApp)
 
     flask_session.Session(app=InformationApp)
+
+    InformationApp.register_blueprint(index_blu)
 
     return InformationApp
 
