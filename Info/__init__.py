@@ -37,7 +37,7 @@ def Create_app(config_name):
     global redis_store
     redis_store = redis.StrictRedis(host=config[config_name].REDIS_HOST,port=config[config_name].REDIS_PORT)
 
-    flask_wtf.CSRFProtect(InformationApp)
+   # flask_wtf.CSRFProtect(InformationApp)
 
     flask_session.Session(app=InformationApp)
 
