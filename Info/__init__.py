@@ -45,5 +45,9 @@ def Create_app(config_name):
 
     InformationApp.register_blueprint(index_blu)
 
+    from Info.modules.passport import passport_blu
+
+    InformationApp.register_blueprint(passport_blu)
+
     return InformationApp
 
