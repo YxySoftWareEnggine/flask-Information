@@ -11,8 +11,8 @@ from Info import response_code
 
 @index_blu.route("/news_list")
 def news_list():
-    cid = flask.request.args.get("cid",1)
-    page = flask.request.args.get("page",1)
+    cid = flask.request.args.get("cid","1")
+    page = flask.request.args.get("page","1")
     per_page = flask.request.args.get("per_page","10")
 
     try:
@@ -22,11 +22,10 @@ def news_list():
         current_app.logger.error(e)
         return flask.jsonify(errno=response_code.RET.PARAMERR,errmsg="参数错误")
     filters = []
-    if cid !=1:
+    if cid !="1":
         filters.append(News.category_id == cid)
-
     try:
-        paginate=News.query.filter(*filters).order_by(News.create_time.desc()).paginate(page,per_page)
+        paginate=News.query.filter(*filters).order_by(News.create_time.desc()).paginate(page,per_page,False)
     except Exception as e:
         current_app.logger.error(e)
         return flask.jsonify(errno=response_code.RET.DATAERR,errmsg="数据库查询错误")
@@ -44,7 +43,7 @@ def news_list():
         "news_dict_li":news_dict_li
     }
 
-    return flask.jsonify(errno=response_code.RET.OK,errmsg="ok")
+    return flask.jsonify(errno=response_code.RET.OK,errmsg="ok",data=data)
 
 
 
