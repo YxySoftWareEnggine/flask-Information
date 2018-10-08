@@ -1,10 +1,13 @@
 var currentCid = 1; // 当前分类 id
-var cur_page = 0; // 当前页
+var cur_page = 1; // 当前页
 var total_page = 1;  // 总页数
 var data_querying = true;   // 是否正在向后台获取数据
 
 
 $(function () {
+
+
+    updateNewsData();
     // 首页分类切换
     $('.menu li').click(function () {
         var clickCid = $(this).attr('data-cid')
@@ -53,7 +56,9 @@ function updateNewsData() {
     $.get("/news_list",params,function (resp) {
         if(resp.errno=="0")
         {
-            $(".list_con").html("");
+            if (cur_page == 1) {
+                $(".list_con").html("")
+            }
             for (var i=0;i<resp.data.news_dict_li.length;i++) {
                 var news = resp.data.news_dict_li[i]
                 var content = '<li>'
