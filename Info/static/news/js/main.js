@@ -118,6 +118,9 @@ $(function(){
             url:"/passport/log",
             type:"POST",
             contentType: "application/json",
+            headers:{
+                "X-CSRFToken":getCookie('csrf_token')
+            },
             data:JSON.stringify(params),
             success:function (resp) {
                 if (resp.errno == "0") {
@@ -172,6 +175,9 @@ $(function(){
             url: "/passport/register",
             type: "post",
             contentType: "application/json",
+            headers:{
+                "X-CSRFToken":getCookie('csrf_token')
+            },
             data: JSON.stringify(params),
             success:function (resp) {
                 if (resp.errno == "0") {
@@ -228,6 +234,9 @@ function sendSMSCode() {
         data: JSON.stringify(params),
         // 请求内容的数据类型
         contentType: "application/json",
+        headers:{
+                "X-CSRFToken":getCookie('csrf_token')
+            },
         // 响应数据的格式
         dataType: "json",
         success: function (resp) {
@@ -297,4 +306,11 @@ function generateUUID() {
         return (c=='x' ? r : (r&0x3|0x8)).toString(16);
     });
     return uuid;
+}
+
+function logout() {
+    $.get('/passport/logout',function (resp) {
+        location.reload();
+    });
+
 }

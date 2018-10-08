@@ -14,6 +14,15 @@ from Info.models import User
 from Info import db
 import datetime
 
+@passport_blu.route('/logout',methods=["GET"])
+def logout():
+    flask.session.pop("user_id")
+    flask.session.pop("nick_name")
+    flask.session.pop("mobile")
+
+    return flask.jsonify(errno=response_code.RET.OK, errmsg="成功")
+
+
 @passport_blu.route('/log',methods=["POST"])
 def log():
     params_dict = flask.request.json
