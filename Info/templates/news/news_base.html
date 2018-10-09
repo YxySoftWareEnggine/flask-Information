@@ -2,25 +2,30 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>首页-新经资讯</title>
-    <link rel="stylesheet" type="text/css" href="../static/news/css/reset.css">
-    <link rel="stylesheet" type="text/css" href="../static/news/css/main.css">
-    <script type="text/javascript" src="../static/news/js/jquery-1.12.4.min.js"></script>
-    <script type="text/javascript" src="../static/news/js/main.js"></script>
-    <script type="text/javascript" src="../static/news/js/index.js"></script>
+    <title>{% block Title %}{% endblock %}</title>
+    <link rel="stylesheet" type="text/css" href="../../static/news/css/reset.css">
+    <link rel="stylesheet" type="text/css" href="../../static/news/css/main.css">
+    <script type="text/javascript" src="../../static/news/js/jquery-1.12.4.min.js"></script>
+    <script type="text/javascript" src="../../static/news/js/main.js"></script>
+    {% block Script %}
+    
+    {% endblock %}
 </head>
 <body>
     <div class="header_con">
         <div class="header">
-            <a href="#" class="logo fl"><img src="../static/news/images/logo.png" alt="logo"></a>
+            <a href="#" class="logo fl"><img src="../../static/news/images/logo.png" alt="logo"></a>
+        {% block Catorga %}
             <ul class="menu fl">
-                <li class="active" data-cid="0"><a href="javascript:;">最新</a></li>
-                <li data-cid="1"><a href="javascript:;">股市</a></li>
-                <li data-cid="2"><a href="javascript:;">债市</a></li>
-                <li data-cid="3"><a href="javascript:;">商品</a></li>
-                <li data-cid="4"><a href="javascript:;">外汇</a></li>
-                <li data-cid="5"><a href="javascript:;">公司</a></li>
+                    {% for ca in user_data.catory %}
+                        {% if loop.index==1 %}
+                            <li class="active" data-cid={{ ca.id }}><a href="javascript:;">{{ ca.name }}</a></li>
+                        {% else %}
+                            <li data-cid={{ ca.id }}><a href="javascript:;">{{ ca.name }}</a></li>
+                        {% endif %}
+                    {% endfor %}
             </ul>
+        {% endblock %}
 
             {% if user_data.user%}
                 <div class="user_login fr">
@@ -33,22 +38,27 @@
                 <a href="javascript:;" class="login_btn">登录</a> / <a href="javascript:;" class="register_btn">注册</a>
             </div>
             {% endif %}
+
         </div>
     </div>
     
     <div class="conter_con">
-        <ul class="list_con fl">
-        </ul>
-        <div class="rank_con fr">
-            <div class="rank_title">
-                <h3>点击排行</h3>
+        {% block contentBlock %}
+        {% endblock %}
+
+            <div class="rank_con fr">
+                {% block authorBlock %}
+                
+                {% endblock %}
+                <div class="rank_title">
+                    <h3>点击排行</h3>
+                </div>
+                <ul class="rank_list">
+                    {% for news in user_data.news_dict_li %}
+                        <li><span class="{{ loop.index0 |index_class }}">{{ loop.index }}</span><a href="#">{{ news.title }}</a></li>
+                    {% endfor %}
+                </ul>
             </div>
-            <ul class="rank_list">
-                {% for news in user_data.news_dict_li %}
-                    <li><span class="{{ loop.index0 |index_class }}">{{ loop.index }}</span><a href="#">{{ news.title }}</a></li>
-                {% endfor %}
-            </ul>
-        </div>
     </div>
     <div class="footer">        
         <div class="footer_links">
@@ -104,7 +114,7 @@
             <div class="form_group">
                 <input type="text" name="code_pwd" id="imagecode" class="code_pwd">
                 <div class="input_tip">图形验证码</div>
-                <img src="../static/news/images/pic_code.png" class="get_pic_code" onclick="generateImageCode()">
+                <img src="../../static/news/images/pic_code.png" class="get_pic_code" onclick="generateImageCode()">
                 <div id="register-image-code-err" class="error_tip">图形码不能为空</div>
             </div>
             <div class="form_group">

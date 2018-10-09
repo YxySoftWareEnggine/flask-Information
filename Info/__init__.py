@@ -12,7 +12,6 @@ from Config import Config,config
 import logging
 import logging.handlers as handle
 from flask_wtf.csrf import generate_csrf
-from .utls.common import to_index_class
 
 db = flask_sqlalchemy.SQLAlchemy()
 redis_store = None #type = redis.StrictRedis
@@ -36,6 +35,8 @@ def Create_app(config_name):
 
     db.init_app(InformationApp)
 
+    from .utls.common import to_index_class
+
     InformationApp.add_template_filter(to_index_class,"index_class")
 
     global redis_store
@@ -57,6 +58,10 @@ def Create_app(config_name):
     from Info.modules.passport import passport_blu
 
     InformationApp.register_blueprint(passport_blu)
+
+    from Info.modules.news import news_blu
+
+    InformationApp.register_blueprint(news_blu)
 
     return InformationApp
 

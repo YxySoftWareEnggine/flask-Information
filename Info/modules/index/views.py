@@ -1,11 +1,12 @@
 from . import index_blu
 from Info import redis_store
 import logging
-from flask import current_app
+from flask import current_app,g
 import flask
 from Info.models import User
-from Info.models import News
+from Info.models import News,Category
 from Info import response_code
+from ...utls.common import user_login_data
 
 
 
@@ -49,15 +50,10 @@ def news_list():
 
 
 @index_blu.route("/")
+@user_login_data
 def index():
-    user_id = flask.session.get("user_id", None)
-    user = None
-    if user_id:
-        try:
-            user = User.query.get(user_id)
-        except Exception as e:
-            current_app.logger.error(e)
 
+    user = g.user
     news_list = []
     try:
         news_list=News.query.order_by(News.clicks.desc()).limit(6)
@@ -69,11 +65,19 @@ def index():
     for news in news_list:
         news_dict_li.append(news.to_basic_dict())
 
+
+    cator = Category.query.all()
+    catory_filter = []
+    for ca in cator:
+        catory_filter.append(ca.to_dict())
+
+
     data = {
                 "user": user.to_dict() if user else None,
-                "news_dict_li":news_dict_li
+                "news_dict_li":news_dict_li,
+                "catory":catory_filter
             }
-    return flask.render_template('index.html', user_data=data)
+    return flask.render_template('news/index.html', user_data=data)
 
 
 
