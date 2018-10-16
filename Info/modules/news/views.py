@@ -5,12 +5,53 @@ import logging
 from flask import current_app,g
 import flask
 from Info.models import User
-from Info.models import News,Category,Comment
+from Info.models import News,Category,Comment,CommentLike
 from Info import response_code
 from ...utls.common import user_login_data
 
 
+@news_blu.route('/news_commentLike',methods=["POST"])
+@user_login_data
+def news_commentlike():
 
+    user = g.user
+    if not user:
+        return flask.jsonify(errno=response_code.RET.SESSIONERR, errmsg="用户未登录")
+    comment_id = flask.request.json.get("comment_id")
+    action = flask.request.json.get("action")
+
+    comment = Comment.query.get(comment_id)
+
+
+    if not all([comment_id,action]):
+        return flask.jsonify(errno=response_code.RET.PARAMERR, errmsg="参数不足")
+    if action=="add":
+        try:
+
+            commentLike = CommentLike()
+            commentLike.comment_id = int(comment_id)
+            commentLike.user_id = int(user.id)
+            if comment.like_count==1:
+                return flask.jsonify(errno=response_code.RET.DATAERR, errmsg="只能点一次赞")
+            comment.like_count+=1
+            db.session.add(commentLike)
+            db.session.commit()
+        except Exception as e:
+            current_app.logger.error(e)
+            return flask.jsonify(errno=response_code.RET.DBERR, errmsg="存储失败")
+        return flask.jsonify(errno=response_code.RET.OK, errmsg="评论成功")
+
+    elif action == "delete":
+        try:
+            comment_like = CommentLike.query.filter_by(comment_id=comment_id, user_id=g.user.id).first()
+            if comment_like:
+                db.session.delete(comment_like)
+                # 减小点赞条数
+                comment.like_count-=1
+                db.session.commit()
+        except Exception as e:
+            return flask.jsonify(errno=response_code.RET.DBERR, errmsg="存储失败")
+        return flask.jsonify(errno=response_code.RET.OK, errmsg="评论成功")
 
 
 @news_blu.route('/news_comment',methods=["POST"])
