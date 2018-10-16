@@ -1,13 +1,15 @@
 
 from . import news_blu
-from Info import redis_store
+from Info import redis_store,db
 import logging
 from flask import current_app,g
 import flask
 from Info.models import User
-from Info.models import News,Category
+from Info.models import News,Category,Comment
 from Info import response_code
 from ...utls.common import user_login_data
+
+
 
 
 
@@ -16,11 +18,34 @@ from ...utls.common import user_login_data
 def news_comment():
     user = g.user
     if not user:
-        return flask.jsonify(errno=response_code.RET.PARAMERR, errmsg="参数错误")
+        return flask.jsonify(errno=response_code.RET.SESSIONERR, errmsg="用户未登录")
 
     news_id = flask.request.json.get("news_id")
     comment = flask.request.json.get("comment")
-    parent_id = 
+    action= flask.request.json.get("action")
+    parent_id = flask.request.json.get("parent_id")
+
+    if not all([news_id,comment]):
+        return flask.jsonify(errno=response_code.RET.PARAMERR, errmsg="参数不足")
+
+    comment_str = Comment()
+    comment_str.user_id = user.id
+    comment_str.news_id = news_id
+    comment_str.content = comment
+
+    if parent_id:
+        comment_str.parent_id = parent_id
+
+    try:
+        db.session.add(comment_str)
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(e)
+        return flask.jsonify(errno=response_code.RET.DBERR, errmsg="存储失败")
+
+        # 返回响应
+    return flask.jsonify(errno=response_code.RET.OK, errmsg="成功",data=comment_str.to_dict())
+
 
 @news_blu.route('/news_collect',methods = ["POST"])
 @user_login_data
@@ -28,7 +53,7 @@ def news_collect():
 
     user = g.user
     if not user:
-        return flask.jsonify(errno=response_code.RET.PARAMERR, errmsg="参数错误")
+        return flask.jsonify(errno=response_code.RET.SESSIONERR, errmsg="用户未登录")
 
     news_id=flask.request.json.get("news_id")
     action=flask.request.json.get("action")
@@ -95,10 +120,23 @@ def news_detail(news_id):
         else:
             is_collected=False
 
+    comments = None
+    try:
+        comments = Comment.query.filter(Comment.news_id==news_id).order_by(Comment.create_time.desc()).all()
+    except Exception as e:
+        current_app.logger.error(e)
+
+    comment_list = []
+    for item in comments if comments else []:
+        comments_dict = item.to_dict()
+        comment_list.append(comments_dict)
+
+
     data = {
             "user": user.to_dict() if user else None,
             "news_dict_li": news_dict_li,
             "news":new.to_dict(),
-            "is_collected":is_collected
+            "is_collected":is_collected,
+            "comments":comment_list
     }
     return flask.render_template('news/detail.html', user_data=data)
