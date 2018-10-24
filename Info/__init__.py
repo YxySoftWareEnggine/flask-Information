@@ -63,5 +63,10 @@ def Create_app(config_name):
 
     InformationApp.register_blueprint(news_blu)
 
+
+    from Info.modules.Profile import Profile_blu
+
+    InformationApp.register_blueprint(Profile_blu)
+
     return InformationApp
 

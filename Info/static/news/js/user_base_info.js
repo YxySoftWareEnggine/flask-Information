@@ -6,20 +6,45 @@ function getCookie(name) {
 $(function () {
 
     $(".base_info").submit(function (e) {
-        e.preventDefault()
+        e.preventDefault();
 
-        var signature = $("#signature").val()
-        var nick_name = $("#nick_name").val()
-        var gender = $(".gender").val()
+        var params = {
+            "signature":$("#signature").val(),
+            "nick_name":$("#nick_name").val(),
+            "gender":$(".gender").val()
+        };
 
-        if (!nick_name) {
-            alert('请输入昵称')
+        if (!params.nick_name) {
+            alert('请输入昵称');
             return
         }
-        if (!gender) {
-            alert('请选择性别')
+        if (!params.gender) {
+            alert('请选择性别');
         }
 
         // TODO 修改用户信息接口
+
+        $.ajax({
+            url:"/user/user_base_info",
+            type:"post",
+            contentType:"application/json",
+            headers:{
+                "X-CSRFToken":getCookie("csrf_token")
+            },
+            data:JSON.stringify(params),
+            success:function (resp) {
+                if(resp.errno=="0")
+                {
+                        $('.user_center_name',parent.document).html(params["nick_name"]);
+                        $('#nick_name',parent.document).html(params["nick_name"]);
+                        $('.input_sub').blur();
+                }
+                else
+                {
+                    alert(resp.errmsg);
+                }
+
+            }
+        })
     })
-})
+});
