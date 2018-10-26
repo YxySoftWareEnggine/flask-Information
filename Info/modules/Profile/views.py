@@ -10,6 +10,89 @@ from ...utls.common import user_login_data
 from ...utls import Yunstorage
 from ...constants import *
 from Info import db
+from datetime import datetime
+
+
+@Profile_blu.route('/release_news',methods=["GET","POST"])
+@user_login_data
+def release_info():
+    user = g.user
+    if flask.request.method == "GET":
+        category = Category.query.all()
+        category_filter = []
+        for categ in category:
+            category_filter.append(categ.to_dict())
+        category_filter.pop(0)
+        data = {
+            "user_info": category_filter
+        }
+        return flask.render_template('news/user_news_release.html',user_data = data)
+
+    News_Title = flask.request.form.get("News_Title")
+    Summary = flask.request.form.get("Summary")
+    News_Image = flask.request.files.get("News_Image").read()
+    content = flask.request.form.get("content")
+    category_id = flask.request.form.get("category_id")
+
+    if not all([News_Title,Summary,News_Image,content,category_id]):
+        return flask.jsonify(errno=response_code.RET.PARAMERR, errmsg="参数错误")
+
+    try:
+        new = News()
+        new.title = News_Title
+        new.content = content
+        new.create_time = datetime.now()
+        new.index_image_url = QINIU_DOMIN_PREFIX+Yunstorage.Stroge(News_Image)
+        new.source = "个人用户"
+        new.user_id = user.id
+        new.category_id = category_id
+        new.status = 1
+        db.session.add(new)
+        db.session.commit()
+
+    except Exception as e:
+        current_app.logger.error(e)
+        db.session.rollback()
+        return flask.jsonify(errno=response_code.RET.DBERR, errmsg="保存数据失败")
+
+    return flask.jsonify(errno=response_code.RET.OK, errmsg="发布成功，等待审核")
+
+
+
+@Profile_blu.route('/collection_info',methods=["GET","POST"])
+@user_login_data
+def collection_info():
+    p = flask.request.args.get("p", 1)
+    try:
+        p = int(p)
+    except Exception as e:
+        current_app.logger.error(e)
+        p = 1
+
+    user = g.user
+    collections = []
+    current_page = 1
+    total_page = 1
+    try:
+        # 进行分页数据查询
+        paginate = user.collection_news.paginate(p, USER_COLLECTION_MAX_NEWS, False)
+        # 获取分页数据
+        collections = paginate.items
+        # 获取当前页
+        current_page = paginate.page
+        # 获取总页数
+        total_page = paginate.pages
+    except Exception as e:
+        current_app.logger.error(e)
+
+    # 收藏列表
+    collection_dict_li = []
+    for news in collections:
+        collection_dict_li.append(news.to_basic_dict())
+
+    data = {"total_page": total_page, "current_page": current_page, "collections": collection_dict_li}
+    return flask.render_template('news/user_collection.html', data=data)
+
 
 
 @Profile_blu.route('/pass_info',methods=["GET","POST"])

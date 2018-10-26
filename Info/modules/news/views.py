@@ -123,6 +123,7 @@ def news_collect():
     else:
         if news not in user.collection_news:
             user.collection_news.append(news)
+            db.session.commit()
 
     return flask.jsonify(errno=response_code.RET.OK, errmsg="成功")
 
