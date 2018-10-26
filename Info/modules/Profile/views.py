@@ -13,6 +13,40 @@ from Info import db
 from datetime import datetime
 
 
+
+@Profile_blu.route('/news_list',methods=["GET","POST"])
+@user_login_data
+def news_list():
+    p = flask.request.args.get("p", 1)
+    try:
+        p = int(p)
+    except Exception as e:
+        current_app.logger.error(e)
+        p = 1
+
+    user = g.user
+    news_li = []
+    current_page = 1
+    total_page = 1
+    try:
+        paginate = News.query.filter(News.user_id == user.id).paginate(p, USER_COLLECTION_MAX_NEWS, False)
+        # 获取当前页数据
+        news_li = paginate.items
+        # 获取当前页
+        current_page = paginate.page
+        # 获取总页数
+        total_page = paginate.pages
+    except Exception as e:
+        current_app.logger.error(e)
+
+    news_dict_li = []
+
+    for news_item in news_li:
+        news_dict_li.append(news_item.to_review_dict())
+    data = {"news_list": news_dict_li, "total_page": total_page, "current_page": current_page}
+    return flask.render_template('news/user_news_list.html', data=data)
+
+
 @Profile_blu.route('/release_news',methods=["GET","POST"])
 @user_login_data
 def release_info():
@@ -31,7 +65,7 @@ def release_info():
     News_Title = flask.request.form.get("News_Title")
     Summary = flask.request.form.get("Summary")
     News_Image = flask.request.files.get("News_Image").read()
-    content = flask.request.form.get("content")
+    content = flask.request.form.get("content1")
     category_id = flask.request.form.get("category_id")
 
     if not all([News_Title,Summary,News_Image,content,category_id]):
@@ -41,6 +75,7 @@ def release_info():
         new = News()
         new.title = News_Title
         new.content = content
+        new.digest = Summary
         new.create_time = datetime.now()
         new.index_image_url = QINIU_DOMIN_PREFIX+Yunstorage.Stroge(News_Image)
         new.source = "个人用户"
