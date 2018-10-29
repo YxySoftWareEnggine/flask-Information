@@ -12,6 +12,11 @@ from Config import Config,config
 import logging
 import logging.handlers as handle
 from flask_wtf.csrf import generate_csrf
+from flask import g
+import datetime
+
+
+
 
 db = flask_sqlalchemy.SQLAlchemy()
 redis_store = None #type = redis.StrictRedis
@@ -51,6 +56,7 @@ def Create_app(config_name):
         return response
     flask_session.Session(app=InformationApp)
 
+
     from Info.modules.index import index_blu
 
     InformationApp.register_blueprint(index_blu)
@@ -67,6 +73,18 @@ def Create_app(config_name):
     from Info.modules.Profile import Profile_blu
 
     InformationApp.register_blueprint(Profile_blu)
+
+    from .utls.common import user_login_data
+    @InformationApp.errorhandler(404)
+    @user_login_data
+    def page_not_found(_):
+        user = g.user
+        data = {"user_info": user.to_dict() if user else None}
+        return flask.render_template('news/404.html', user_data=data)
+
+    from Info.modules.admin import admin_blu
+
+    InformationApp.register_blueprint(admin_blu)
 
     return InformationApp
 

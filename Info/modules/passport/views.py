@@ -19,6 +19,7 @@ def logout():
     flask.session.pop("user_id")
     flask.session.pop("nick_name")
     flask.session.pop("mobile")
+    flask.session.pop("is_admin")
 
     return flask.jsonify(errno=response_code.RET.OK, errmsg="成功")
 
@@ -38,6 +39,7 @@ def log():
         flask.session["user_id"] = result.id
         flask.session["nick_name"] = result.nick_name
         flask.session["mobile"] = result.mobile
+        flask.session["is_admin"] = False
         # 记录用户最后一次登录时间
         result.last_login = datetime.datetime.now()
         try:
@@ -87,6 +89,7 @@ def register():
     flask.session["user_id"] = user.id
     flask.session["mobile"] = user.mobile
     flask.session["nick_name"] = user.nick_name
+    flask.session["admin"] = False
 
     return  flask.jsonify(errno=response_code.RET.OK, errmsg="成功")
 
