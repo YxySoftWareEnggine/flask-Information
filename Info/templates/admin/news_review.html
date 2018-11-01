@@ -30,13 +30,15 @@
                 {% for foo in data.news_list %}
                     <tr>
 					    <td>{{ loop.index }}</td>
-					    <td class="tleft">{{ foo.digest }}</td>
+					    <td class="tleft">{{ foo.title }}</td>
 					    <td>{{ foo.create_time }}</td>
 					    <td>
-                            {% if foo.status %}
-                                {{ "已通过" }}
+                            {% if foo.status==0 %}
+                                已通过
+                            {% elif foo.status==-1%}
+                                未通过
                             {% else %}
-                                {{ "未通过" }}
+                                未审核
                             {% endif %}
                         </td>
 					    <td>
@@ -60,7 +62,7 @@
 					currentPage: {{ data.current_page }},
 					totalPage: {{ data.total_page }},
 					callback: function(current) {
-					    alert('ok!');
+                        window.location.href = "/admin/news_review?p=" + current
 					}
 				});
 			});

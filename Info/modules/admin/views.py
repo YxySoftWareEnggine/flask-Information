@@ -13,6 +13,173 @@ from Info import db
 from datetime import datetime,timedelta
 import time
 
+
+
+
+
+
+@admin_blu.route('/news_type',methods=["GET","POST"])
+def new_type():
+
+    if flask.request.method == "GET":
+        category_li = []
+        category= None
+        try:
+            category = Category.query.all()
+        except Exception as e:
+            current_app.logger.error(e)
+
+        for cate in category:
+            category_li.append(cate.to_dict())
+        data = {
+            "category":category_li
+        }
+        return flask.render_template('admin/news_type.html',data=data)
+    else:
+        name = flask.request.json.get("name")
+        id  = flask.request.json.get("id")
+
+        if not name:
+            return flask.jsonify(error=response_code.RET.DATAERR,errmsg="参数错误")
+
+        if id:
+            try:
+                category = Category.query.filter(Category.id == id).first()
+                category.name = name
+                db.session.add(category)
+                db.session.commit()
+            except Exception as e:
+                current_app.logger.error(e)
+
+            return flask.jsonify(errno=response_code.RET.OK,errmsg="成功")
+        else:
+            try:
+                category = Category()
+                category.name = name
+                db.session.add(category)
+                db.session.commit()
+            except Exception as e:
+                current_app.logger.error(e)
+
+            return flask.jsonify(errno=response_code.RET.OK, errmsg="成功")
+
+
+@admin_blu.route('/new_edit_detail',methods=["GET","POST"])
+def new_edit_detail():
+
+    if flask.request.method == "GET":
+        news_id = flask.request.args.get("news_id")
+
+        try:
+            news_id = int(news_id)
+        except Exception as e:
+            current_app.logger.error(e)
+
+        news = News.query.get(news_id)
+
+        try:
+            categories = Category.query.all()
+        except Exception as e:
+            current_app.logger.error(e)
+            return flask.render_template('admin/news_edit_detail.html', errmsg="查询数据错误")
+
+        category_dict_li = []
+        for category in categories:
+            # 取到分类的字典
+            cate_dict = category.to_dict()
+            # 判断当前遍历到的分类是否是当前新闻的分类，如果是，则添加is_selected为true
+            if category.id == news.category_id:
+                cate_dict["is_selected"] = True
+            category_dict_li.append(cate_dict)
+
+        # 移除最新的分类
+        category_dict_li.pop(0)
+
+        data = {
+            "news":news.to_dict(),
+            "category_dict_li":category_dict_li
+        }
+        return flask.render_template('admin/news_edit_detail.html',data= data)
+
+    else:
+        news_id = flask.request.form.get("news_id")
+        title = flask.request.form.get("title")
+        digest = flask.request.form.get("digest")
+        content = flask.request.form.get("content")
+        index_image = flask.request.files.get("index_image")
+        category_id = flask.request.form.get("category_id")
+        # 1.1 判断数据是否有值
+        if not all([title, digest, content, category_id]):
+            return flask.jsonify(errno=response_code.RET.PARAMERR, errmsg="参数有误")
+
+        # 查询指定id的
+        try:
+            news = News.query.get(news_id)
+        except Exception as e:
+            current_app.logger.error(e)
+            return flask.jsonify(errno=response_code.RET.DBERR, errmsg="数据查询失败")
+
+        if not news:
+            return flask.jsonify(errno=response_code.RET.NODATA, errmsg="未查询到新闻数据")
+
+        # 1.2 尝试读取图片
+        if index_image:
+            try:
+                index_image = index_image.read()
+            except Exception as e:
+                current_app.logger.error(e)
+                return flask.jsonify(errno=response_code.RET.PARAMERR, errmsg="参数有误")
+
+            # 2. 将标题图片上传到七牛
+            try:
+                key = Yunstorage.Stroge(index_image)
+            except Exception as e:
+                current_app.logger.error(e)
+                return flask.jsonify(errno=response_code.RET.THIRDERR, errmsg="上传图片错误")
+            news.index_image_url = QINIU_DOMIN_PREFIX + key
+
+        # 3. 设置相关数据
+        news.title = title
+        news.digest = digest
+        news.content = content
+        news.category_id = category_id
+
+        return flask.jsonify(errno=response_code.RET.OK, errmsg="OK")
+
+
+@admin_blu.route('/new_edit',methods=["GET","POST"])
+def new_edit():
+    page = flask.request.args.get("p", 1)
+    try:
+        page = int(page)
+    except Exception as e:
+        current_app.logger.error(e)
+        page = 1
+    total_page = 1
+    current_page = 1
+    news = []
+
+    try:
+        item = News.query.filter().paginate(page, ADMIN_NEWS_PAGE_MAX_COUNT, False)
+        news = item.items
+        current_page = item.page
+        total_page = item.pages
+    except Exception as e:
+        current_app.logger.error(e)
+    news_dict = []
+
+    for new_list in news:
+        news_dict.append(new_list.to_review_dict())
+
+    data = {
+        "news_list": news_dict,
+        "current_page": current_page,
+        "total_page": total_page
+    }
+    return flask.render_template('admin/news_edit.html', data=data)
+
+
+
 @admin_blu.route('/new_detail',methods=["GET","POST"])
 def new_detail():
 
@@ -67,6 +234,7 @@ def new_detail():
 
         # 保存数据库
         try:
+            db.session.add(news)
             db.session.commit()
         except Exception as e:
             current_app.logger.error(e)
@@ -98,7 +266,7 @@ def news_review():
     news_dict=[]
 
     for new_list in news:
-        news_dict.append(new_list.to_dict())
+        news_dict.append(new_list.to_review_dict())
 
     data ={
         "news_list":news_dict,
