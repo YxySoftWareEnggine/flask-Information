@@ -13,6 +13,58 @@ from Info import db
 from datetime import datetime
 
 
+@Profile_blu.route('/news_Canle_follow',methods=["POST"])
+@user_login_data
+def new_cancle_follow():
+    follow = flask.request.json.get("follow")
+    cid = flask.request.json.get("cid")
+    user = User.query.get(cid)
+    try:
+        user.followers.remove(g.user)
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(e)
+    return flask.jsonify(errno=response_code.RET.OK, errmsg="OK")
+
+
+
+@Profile_blu.route('/news_follow',methods=["GET"])
+@user_login_data
+def new_follow():
+    p = flask.request.args.get("p", 1)
+    try:
+        p = int(p)
+    except Exception as e:
+        current_app.logger.error(e)
+        p = 1
+
+    user = g.user
+    follow_li = []
+    current_page = 1
+    total_page = 1
+    try:
+        paginate = user.followed.paginate(p, USER_FOLLOWED_MAX_COUNT, False)
+        # 获取当前页数据
+        follow_li = paginate.items
+        # 获取当前页
+        current_page = paginate.page
+        # 获取总页数
+        total_page = paginate.pages
+    except Exception as e:
+        current_app.logger.error(e)
+
+    follow_dict_li = []
+
+    for follow_item in follow_li:
+        follow_dict_li.append(follow_item.to_dict())
+
+
+    data = {
+        "follow_list": follow_dict_li,
+        "total_page": total_page,
+        "current_page": current_page
+    }
+    return flask.render_template('news/user_follow.html', data=data)
 
 @Profile_blu.route('/news_list',methods=["GET","POST"])
 @user_login_data

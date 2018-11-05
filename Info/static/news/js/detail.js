@@ -95,7 +95,7 @@ $(function(){
             data:JSON.stringify(params),
             success:function (resp) {
                 if (resp.errno == "0") {
-                    var comments = resp.data;
+                    var comments = resp.data.comment;
                     if (comments.user.avatar_url == null)
                     {
                         comments.user.avatar_url = ""
@@ -239,7 +239,7 @@ $(function(){
                     data: JSON.stringify(params),
                     success: function (resp) {
                     if (resp.errno == "0") {
-                        var comment = resp.data
+                        var comment = resp.data.comment;
                         // 拼接内容
                         var comment_html = ""
                         comment_html += '<div class="comment_list">'
@@ -282,14 +282,63 @@ $(function(){
                 })
             }
         })
+    var follow = false;
 
     // 关注当前新闻作者
     $(".focus").click(function () {
-
+        follow=true;
+        var cid = $(this).attr('data-author');
+        var params = {
+            "follow":follow,
+            "cid":cid
+        };
+        $.ajax({
+            url: "/news/news_follow",
+            type: "post",
+            contentType: "application/json",
+            headers: {
+                "X-CSRFToken": getCookie("csrf_token")
+            },
+            data: JSON.stringify(params),
+            success: function (resp) {
+                if(resp.errno == "0")
+                {
+                    window.location.reload()
+                }
+                else
+                {
+                     alert(resp.errmsg)
+                }
+            }
+        })
     })
 
     // 取消关注当前新闻作者
     $(".focused").click(function () {
-
+        follow=false;
+        var cid = $(this).attr('data-author');
+        var params = {
+            "follow":follow,
+            "cid":cid
+        };
+        $.ajax({
+            url: "/news/news_follow",
+            type: "post",
+            contentType: "application/json",
+            headers: {
+                "X-CSRFToken": getCookie("csrf_token")
+            },
+            data: JSON.stringify(params),
+            success: function (resp) {
+                if(resp.errno == "0")
+                {
+                    window.location.reload()
+                }
+                else
+                {
+                     alert(resp.errmsg)
+                }
+            }
+        })
     })
 })

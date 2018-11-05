@@ -24,7 +24,7 @@
 			<ul class="option_list">
 				<li class="active"><a href={{ url_for("Profile.base_info") }} target="main_frame">基本资料</a></li>
 				<li><a href="{{ url_for("Profile.Pic_info") }}" target="main_frame">头像设置</a></li>
-				<li><a href="../../static/news/html/user_follow.html" target="main_frame">我的关注</a></li>
+				<li><a href="{{ url_for("Profile.new_follow") }}" target="main_frame">我的关注</a></li>
 				<li><a href="{{ url_for("Profile.pass_info") }}" target="main_frame">密码修改</a></li>
 				<li><a href="{{ url_for("Profile.collection_info")}}" target="main_frame">我的收藏</a></li>
 				<li><a href="{{ url_for("Profile.release_info") }}" target="main_frame">新闻发布</a></li>

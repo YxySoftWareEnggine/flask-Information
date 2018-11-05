@@ -4,11 +4,35 @@ from Info import redis_store,db
 import logging
 from flask import current_app,g
 import flask
-from Info.models import User
-from Info.models import News,Category,Comment,CommentLike
-from Info import response_code
+from Info.models import News,Category,Comment,CommentLike,User,tb_user_follows
+from Info import response_code,db
 from ...utls.common import user_login_data
 
+
+@news_blu.route('/news_follow',methods=["POST"])
+@user_login_data
+def new_follow():
+
+    follow = flask.request.json.get("follow")
+    cid = flask.request.json.get("cid")
+    user = User.query.get(cid)
+    if follow:
+        if user in g.user.followers:
+            return flask.jsonify(errno=response_code.RET.DATAERR, errmsg="用户已关注")
+        else:
+            try:
+                user.followers.append(g.user)
+                db.session.commit()
+            except Exception as e:
+                current_app.logger.error(e)
+            return flask.jsonify(errno=response_code.RET.OK, errmsg="OK")
+    else:
+        try:
+            user.followers.remove(g.user)
+            db.session.commit()
+        except Exception as e:
+            current_app.logger.error(e)
+        return flask.jsonify(errno=response_code.RET.OK, errmsg="OK")
 
 @news_blu.route('/news_commentLike',methods=["POST"])
 @user_login_data
@@ -20,7 +44,7 @@ def news_commentlike():
     comment_id = flask.request.json.get("comment_id")
     action = flask.request.json.get("action")
 
-    comment = Comment.query.get(comment_id)
+    comment = Comment.query.get(int(comment_id))
 
 
     if not all([comment_id,action]):
@@ -84,8 +108,11 @@ def news_comment():
         current_app.logger.error(e)
         return flask.jsonify(errno=response_code.RET.DBERR, errmsg="存储失败")
 
+    data = {
+        "comment":comment_str.to_dict()
+    }
         # 返回响应
-    return flask.jsonify(errno=response_code.RET.OK, errmsg="成功",data=comment_str.to_dict())
+    return flask.jsonify(errno=response_code.RET.OK, errmsg="成功",data=data)
 
 
 @news_blu.route('/news_collect',methods = ["POST"])
@@ -173,12 +200,26 @@ def news_detail(news_id):
         comments_dict = item.to_dict()
         comment_list.append(comments_dict)
 
+    resp_dict = new.to_dict()
 
-    data = {
-            "user": user.to_dict() if user else None,
-            "news_dict_li": news_dict_li,
-            "news":new.to_dict(),
-            "is_collected":is_collected,
-            "comments":comment_list
+    count = None
+    follow = None
+    if resp_dict["author"]:
+        count = News.query.filter(News.user_id == resp_dict["author"]["id"]).count()
+        user = User.query.get(resp_dict["author"]["id"])
+        if user in g.user.followed:
+            follow = True
+        else:
+            follow = False
+
+    final_data = {
+        "user": user.to_dict() if user else None,
+        "news_dict_li": news_dict_li,
+        "news": new.to_dict(),
+        "is_collected": is_collected,
+        "comments": comment_list,
+        "Count":count,
+        "is_follow":follow
     }
-    return flask.render_template('news/detail.html', user_data=data)
+
+    return flask.render_template('news/detail.html', user_data=final_data)
